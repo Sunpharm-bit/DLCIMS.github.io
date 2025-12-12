@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>实验室仪器耗材库存管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2c5aa0;
+            --primary-light: #4a7bc7;
+            --secondary-color: #ff9800;
+            --danger-color: #e53935;
+            --success-color: #43a047;
+            --warning-color: #ffb300;
+            --light-bg: #f8fafc;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --border-radius: 10px;
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: #333;
+            line-height: 1.6;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 顶部栏 */
+        .app-bar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1a3e7a 100%);
+            color: white;
+            padding: 1.2rem 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .app-bar-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .app-title {
+            display: flex;
+            align-items: center;
+            font-size: 1.6rem;
+            font-weight: 600;
+        }
+        
+        .app-title i {
+            margin-right: 12px;
+            font-size: 1.8rem;
+        }
+        
+        .app-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        /* 主要内容区域 */
+        .main-content {
+            flex: 1;
+            padding: 1.5rem;
+        }
+        
+        /* 控制面板 */
+        .control-panel {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .search-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: var(--border-radius);
+            border: 1px solid #e1e5eb;
+            padding: 0.8rem 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .search-box input {
+            border: none;
+            outline: none;
+            padding: 0.5rem;
+            font-size: 1rem;
+            width: 100%;
+            background: transparent;
+        }
+        
+        .search-type-selector {
+            display: flex;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            border: 1px solid #e1e5eb;
+        }
+        
+        .search-type-btn {
+            padding: 0.8rem 1.2rem;
+            border: none;
+            background: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        
+        .search-type-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--border-radius);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(44, 90, 160, 0.2);
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e6a200;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        /* 统计卡片 */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.5rem;
+        }
+        
+        .stat-icon.total { background-color: #e3f2fd; color: var(--primary-color); }
+        .stat-icon.low { background-color: #fff3e0; color: var(--warning-color); }
+        .stat-icon.critical { background-color: #ffebee; color: var(--danger-color); }
+        .stat-icon.order { background-color: #e8f5e9; color: var(--success-color); }
+        
+        .stat-info h3 {
+            font-size: 1.8rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .stat-info p {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        /* 表格区域 */
+        .table-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        
+        thead {
+            background-color: #f1f5fd;
+        }
+        
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            border-bottom: 2px solid #e0e6f0;
+            font-size: 1rem;
+        }
+        
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #eef2f7;
+            vertical-align: middle;
+        }
+        
+        tr:hover {
+            background-color: #f9fbfe;
+        }
+        
+        .stock-low {
+            background-color: #fff5f5;
+        }
+        
+        .stock-low td:first-child {
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .stock-low:hover {
+            background-color: #ffeaea;
+        }
+        
+        .stock-count {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .stock-low .stock-count {
+            color: var(--danger-color);
+            position: relative;
+            padding-left: 24px;
+        }
+        
+        .stock-low .stock-count:before {
+            content: "⚠";
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .order-input-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .order-input {
+            width: 80px;
+            padding: 0.6rem;
+            border-radius: 6px;
+            border: 1px solid #d0d7e5;
+            text-align: center;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        .order-input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+        }
+        
+        .btn-small {
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        
+        /* 模态框 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+        
+        .modal {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 700px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal h2 {
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border-radius: var(--border-radius);
+            border: 1px solid #d0d7e5;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+        }
+        
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        /* 加载状态 */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            text-align: center;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #ccc;
+        }
+        
+        /* 底部栏 */
+        .footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            margin-top: auto;
+        }
+        
+        .footer p {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .app-bar-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+                position: absolute;
+                right: 1.5rem;
+                top: 1.2rem;
+            }
+            
+            .action-buttons {
+                width: 100%;
+                margin-top: 1rem;
+                justify-content: flex-start;
+            }
+            
+            .search-container {
+                flex-direction: column;
+            }
+            
+            .search-box, .search-type-selector {
+                width: 100%;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .table-container {
+                padding: 1rem;
+                margin: 0 -1rem;
+                border-radius: 0;
+            }
+            
+            .form-row .form-group {
+                min-width: 100%;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+            }
+            
+            .modal-buttons .btn {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .app-title {
+                font-size: 1.3rem;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn {
+                padding: 0.7rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+        }
+        
+        /* 侧边栏菜单（移动端） */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 280px;
+            height: 100vh;
+            background-color: white;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            transition: var(--transition);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+        
+        .sidebar.active {
+            right: 0;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .sidebar-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 0.8rem;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1rem;
+            border-radius: var(--border-radius);
+            color: #333;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .sidebar-menu a:hover {
+            background-color: #f5f7fa;
+        }
+        
+        .sidebar-menu i {
+            margin-right: 0.8rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+        }
+        
+        .sidebar-overlay.active {
+            display: block;
+        }
+        
+        /* 通知 */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius);
+            background-color: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1002;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: var(--transition);
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .notification.success {
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .notification.error {
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .notification.warning {
+            border-left: 4px solid var(--warning-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部栏 -->
+        <header class="app-bar">
+            <div class="app-bar-content">
+                <div>
+                    <div class="app-title">
+                        <i class="fas fa-flask"></i>
+                        <span>实验室耗材库存系统</span>
+                    </div>
+                    <div class="app-subtitle">实时库存监控 · 智能申购提醒</div>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </header>
+        
+        <!-- 主要内容区域 -->
+        <main class="main-content">
+            <!-- 控制面板 -->
+            <div class="control-panel">
+                <div class="search-container">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="输入耗材名称或货号搜索...">
+                    </div>
+                    <div class="search-type-selector">
+                        <button class="search-type-btn active" data-type="name">按名称</button>
+                        <button class="search-type-btn" data-type="code">按货号</button>
+                    </div>
+                    <button class="btn btn-secondary" id="clearSearch">
+                        <i class="fas fa-times"></i> 清除
+                    </button>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="addNewItem">
+                        <i class="fas fa-plus-circle"></i> 新增耗材
+                    </button>
+                    <button class="btn btn-warning" id="viewLowStock">
+                        <i class="fas fa-exclamation-circle"></i> 低库存耗材
+                    </button>
+                    <button class="btn btn-secondary" id="refreshData">
+                        <i class="fas fa-sync-alt"></i> 刷新数据
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 统计卡片 -->
+            <div class="stats-cards" id="statsCards">
+                <!-- 动态生成统计卡片 -->
+            </div>
+            
+            <!-- 数据表格 -->
+            <div class="table-container">
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>正在加载耗材数据...</p>
+                </div>
+                
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <i class="fas fa-box-open"></i>
+                    <h3>暂无耗材数据</h3>
+                    <p>点击"新增耗材"按钮添加第一条记录</p>
+                </div>
+                
+                <div id="tableContent" style="display: none;">
+                    <table id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>序号</th>
+                                <th>耗材名称</th>
+                                <th>货号</th>
+                                <th>规格</th>
+                                <th>单位</th>
+                                <th>库存</th>
+                                <th>最低库存</th>
+                                <th>位置</th>
+                                <th>申购量</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- 表格数据将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+        
+        <!-- 底部栏 -->
+        <footer class="footer">
+            <p>实验室仪器耗材库存管理系统 &copy; 2023</p>
+            <p>所有实验室成员均可实时查看库存状态</p>
+            <p style="margin-top: 10px; font-size: 0.8rem; opacity: 0.8;">数据最后更新: <span id="lastUpdateTime">-</span></p>
+        </footer>
+    </div>
+    
+    <!-- 侧边栏菜单（移动端） -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>菜单</h3>
+            <button class="sidebar-close" id="sidebarClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="#"><i class="fas fa-home"></i> 首页</a></li>
+            <li><a href="#" id="sidebarLowStock"><i class="fas fa-exclamation-triangle"></i> 低库存耗材</a></li>
+            <li><a href="#" id="sidebarAddItem"><i class="fas fa-plus-circle"></i> 新增耗材</a></li>
+            <li><a href="#" id="sidebarOrderHistory"><i class="fas fa-history"></i> 申购记录</a></li>
+            <li><a href="#"><i class="fas fa-download"></i> 导出数据</a></li>
+            <li><a href="#"><i class="fas fa-cog"></i> 系统设置</a></li>
+        </ul>
+    </aside>
+    
+    <!-- 新增/编辑耗材模态框 -->
+    <div class="modal-overlay" id="itemModal">
+        <div class="modal">
+            <h2><i class="fas fa-vial"></i> <span id="modalTitle">新增耗材</span></h2>
+            <form id="itemForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemName">耗材名称 *</label>
+                        <input type="text" id="itemName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemCode">货号 *</label>
+                        <input type="text" id="itemCode" class="form-control" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemSpec">规格型号</label>
+                        <input type="text" id="itemSpec" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemUnit">单位</label>
+                        <select id="itemUnit" class="form-control">
+                            <option value="个">个</option>
+                            <option value="盒">盒</option>
+                            <option value="包">包</option>
+                            <option value="瓶">瓶</option>
+                            <option value="套">套</option>
+                            <option value="支">支</option>
+                            <option value="张">张</option>
+                            <option value="ml">ml</option>
+                            <option value="g">g</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemStock">当前库存 *</label>
+                        <input type="number" id="itemStock" class="form-control" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemMinStock">最低库存 *</label>
+                        <input type="number" id="itemMinStock" class="form-control" min="1" required value="10">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemLocation">存放位置</label>
+                        <input type="text" id="itemLocation" class="form-control" value="试剂柜A">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemSupplier">供应商</label>
+                        <input type="text" id="itemSupplier" class="form-control">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemCategory">耗材类别</label>
+                        <select id="itemCategory" class="form-control">
+                            <option value="通用耗材">通用耗材</option>
+                            <option value="专用耗材">专用耗材</option>
+                            <option value="试剂">试剂</option>
+                            <option value="仪器配件">仪器配件</option>
+                            <option value="安全防护">安全防护</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemNotes">备注</label>
+                        <input type="text" id="itemNotes" class="form-control">
+                    </div>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" id="cancelModal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存耗材信息</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 申购成功通知 -->
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <div>
+            <strong id="notificationTitle">操作成功</strong>
+            <p id="notificationMessage">操作已完成</p>
+        </div>
+    </div>
+
+    <script>
+        // 实验室耗材数据将从外部JSON文件加载
+        let inventoryData = [];
+        let filteredData = [];
+        let searchType = 'name';
+        let editItemId = null;
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载数据
+            loadInventoryData();
+            
+            // 初始化事件监听器
+            initEventListeners();
+            
+            // 更新最后更新时间
+            updateLastUpdateTime();
+        });
+        
+        // 加载库存数据
+        async function loadInventoryData() {
+            try {
+                showLoading();
+                
+                // 从JSON文件加载数据
+                const response = await fetch('lab-inventory-data.json');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // 检查数据格式
+                if (data && Array.isArray(data.items)) {
+                    inventoryData = data.items.map(item => ({
+                        ...item,
+                        orderQty: item.orderQty || 0
+                    }));
+                    
+                    // 如果有保存到localStorage的数据，合并更新
+                    const savedData = localStorage.getItem('labInventoryData');
+                    if (savedData) {
+                        try {
+                            const localData = JSON.parse(savedData);
+                            // 用本地数据更新从JSON加载的数据
+                            localData.forEach(localItem => {
+                                const index = inventoryData.findIndex(item => item.id === localItem.id);
+                                if (index !== -1) {
+                                    // 更新库存和申购量
+                                    inventoryData[index].stock = localItem.stock;
+                                    inventoryData[index].orderQty = localItem.orderQty;
+                                }
+                            });
+                        } catch (e) {
+                            console.error('Error parsing local storage data:', e);
+                        }
+                    }
+                    
+                    filteredData = [...inventoryData];
+                    
+                    // 渲染表格和统计
+                    renderStats();
+                    renderTable();
+                    hideLoading();
+                    
+                    // 显示成功通知
+                    showNotification('数据加载成功', `已加载 ${inventoryData.length} 条耗材记录`, 'success');
+                } else {
+                    throw new Error('数据格式错误');
+                }
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                
+                // 显示错误，使用默认数据
+                showNotification('加载数据失败', '使用默认数据，请检查网络连接', 'error');
+                
+                // 使用默认数据
+                inventoryData = getDefaultData();
+                filteredData = [...inventoryData];
+                
+                renderStats();
+                renderTable();
+                hideLoading();
+            }
+        }
+        
+        // 获取默认数据（备用）
+        function getDefaultData() {
+            return [
+                { id: 1, name: "离心管", code: "LTG-015", spec: "15mL", unit: "包", stock: 8, minStock: 10, location: "试剂柜A", supplier: "赛默飞", category: "通用耗材", notes: "", orderQty: 0 },
+                { id: 2, name: "PCR管", code: "PCR-020", spec: "0.2mL", unit: "盒", stock: 25, minStock: 15, location: "冷藏柜B", supplier: "艾本德", category: "专用耗材", notes: "", orderQty: 0 },
+                { id: 3, name: "移液器吸头", code: "YXT-010", spec: "10μL", unit: "盒", stock: 3, minStock: 8, location: "工作台C", supplier: "吉尔森", category: "通用耗材", notes: "需灭菌", orderQty: 0 },
+                { id: 4, name: "培养皿", code: "PYP-090", spec: "90mm", unit: "个", stock: 45, minStock: 20, location: "培养箱旁", supplier: "康宁", category: "通用耗材", notes: "", orderQty: 0 },
+                { id: 5, name: "细胞冻存管", code: "XBDG-2", spec: "2mL", unit: "盒", stock: 12, minStock: 10, location: "液氮罐旁", supplier: "赛默飞", category: "专用耗材", notes: "无菌", orderQty: 0 },
+                { id: 6, name: "滤膜", code: "LM-022", spec: "0.22μm", unit: "张", stock: 50, minStock: 30, location: "试剂柜A", supplier: "密理博", category: "通用耗材", notes: "", orderQty: 0 },
+                { id: 7, name: "色谱柱", code: "SPZ-C18", spec: "C18 5μm", unit: "支", stock: 2, minStock: 3, location: "仪器室", supplier: "安捷伦", category: "仪器配件", notes: "高效液相用", orderQty: 0 },
+                { id: 8, name: "比色皿", code: "BSM-10", spec: "10mm", unit: "个", stock: 15, minStock: 10, location: "光谱仪旁", supplier: "岛津", category: "仪器配件", notes: "石英材质", orderQty: 0 },
+                { id: 9, name: "称量纸", code: "CLZ-100", spec: "10×10cm", unit: "包", stock: 5, minStock: 10, location: "天平旁", supplier: "赛多利斯", category: "通用耗材", notes: "", orderQty: 0 },
+                { id: 10, name: "pH试纸", code: "PH-014", spec: "1-14", unit: "本", stock: 22, minStock: 15, location: "试剂柜B", supplier: "默克", category: "试剂", notes: "广谱", orderQty: 0 }
+            ];
+        }
+        
+        // 初始化事件监听器
+        function initEventListeners() {
+            // 搜索功能
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', handleSearch);
+            
+            // 搜索类型切换
+            document.querySelectorAll('.search-type-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.search-type-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    searchType = this.dataset.type;
+                    
+                    // 如果搜索框有内容，重新搜索
+                    if (searchInput.value.trim()) {
+                        handleSearch();
+                    }
+                });
+            });
+            
+            // 清除搜索
+            document.getElementById('clearSearch').addEventListener('click', function() {
+                searchInput.value = '';
+                filteredData = [...inventoryData];
+                renderTable();
+                renderStats();
+            });
+            
+            // 查看低库存耗材
+            document.getElementById('viewLowStock').addEventListener('click', viewLowStock);
+            document.getElementById('sidebarLowStock').addEventListener('click', function(e) {
+                e.preventDefault();
+                viewLowStock();
+                closeSidebar();
+            });
+            
+            // 新增耗材按钮
+            document.getElementById('addNewItem').addEventListener('click', openAddModal);
+            document.getElementById('sidebarAddItem').addEventListener('click', function(e) {
+                e.preventDefault();
+                openAddModal();
+                closeSidebar();
+            });
+            
+            // 刷新数据
+            document.getElementById('refreshData').addEventListener('click', loadInventoryData);
+            
+            // 模态框相关
+            document.getElementById('cancelModal').addEventListener('click', closeModal);
+            document.getElementById('itemModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+            
+            // 表单提交
+            document.getElementById('itemForm').addEventListener('submit', handleFormSubmit);
+            
+            // 移动端菜单
+            document.getElementById('mobileMenuBtn').addEventListener('click', openSidebar);
+            document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
+            document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+            
+            // 更新最后更新时间按钮
+            document.getElementById('refreshData').addEventListener('click', updateLastUpdateTime);
+        }
+        
+        // 渲染统计卡片
+        function renderStats() {
+            const totalItems = inventoryData.length;
+            const lowStockItems = inventoryData.filter(item => item.stock < item.minStock).length;
+            const criticalStockItems = inventoryData.filter(item => item.stock < item.minStock * 0.3).length;
+            const pendingOrders = inventoryData.filter(item => item.orderQty > 0).length;
+            
+            const statsCards = document.getElementById('statsCards');
+            statsCards.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-icon total">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>${totalItems}</h3>
+                        <p>总耗材种类</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon low">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>${lowStockItems}</h3>
+                        <p>低库存耗材</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon critical">
+                        <i class="fas fa-skull-crossbones"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>${criticalStockItems}</h3>
+                        <p>紧急缺货</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon order">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>${pendingOrders}</h3>
+                        <p>待申购耗材</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 渲染表格
+        function renderTable() {
+            const tableBody = document.getElementById('tableBody');
+            
+            if (filteredData.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('tableContent').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('tableContent').style.display = 'block';
+            
+            tableBody.innerHTML = '';
+            
+            filteredData.forEach((item, index) => {
+                const isLowStock = item.stock < item.minStock;
+                const isCritical = item.stock < item.minStock * 0.3;
+                const rowClass = isLowStock ? 'stock-low' : '';
+                
+                const row = document.createElement('tr');
+                row.className = rowClass;
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>
+                        <div><strong>${item.name}</strong></div>
+                        ${item.category ? `<small style="color: #666;">${item.category}</small>` : ''}
+                    </td>
+                    <td><code style="background: #f1f5fd; padding: 3px 6px; border-radius: 4px;">${item.code}</code></td>
+                    <td>${item.spec || '-'}</td>
+                    <td>${item.unit}</td>
+                    <td>
+                        <span class="stock-count">${item.stock}</span>
+                        ${isCritical ? '<i class="fas fa-fire" style="color: #e53935; margin-left: 5px;"></i>' : ''}
+                    </td>
+                    <td>${item.minStock}</td>
+                    <td>${item.location || '-'}</td>
+                    <td>
+                        <div class="order-input-container">
+                            <input type="number" class="order-input" data-id="${item.id}" value="${item.orderQty}" min="0" placeholder="数量">
+                            ${item.orderQty > 0 ? `<span style="color: #43a047; font-weight: bold;">+${item.orderQty}</span>` : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn-small btn-success submit-order" data-id="${item.id}" ${item.orderQty <= 0 ? 'disabled style="opacity: 0.5;"' : ''}>
+                            <i class="fas fa-check"></i> 申购
+                        </button>
+                        <button class="btn-small btn-secondary edit-item" data-id="${item.id}" style="margin-left: 5px;">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // 添加事件监听器
+            document.querySelectorAll('.submit-order').forEach(button => {
+                button.addEventListener('click', handleOrderSubmit);
+            });
+            
+            document.querySelectorAll('.order-input').forEach(input => {
+                input.addEventListener('input', handleOrderInputChange);
+            });
+            
+            document.querySelectorAll('.edit-item').forEach(button => {
+                button.addEventListener('click', handleEditItem);
+            });
+        }
+        
+        // 处理搜索
+        function handleSearch() {
+            const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+            
+            if (!searchTerm) {
+                filteredData = [...inventoryData];
+                renderTable();
+                renderStats();
+                return;
+            }
+            
+            if (searchType === 'name') {
+                filteredData = inventoryData.filter(item => 
+                    item.name.toLowerCase().includes(searchTerm) ||
+                    (item.category && item.category.toLowerCase().includes(searchTerm))
+                );
+            } else {
+                filteredData = inventoryData.filter(item => 
+                    item.code.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            renderTable();
+        }
+        
+        // 查看低库存耗材
+        function viewLowStock() {
+            filteredData = inventoryData.filter(item => item.stock < item.minStock);
+            document.getElementById('searchInput').value = '';
+            renderTable();
+            
+            if (filteredData.length === 0) {
+                showNotification('无低库存耗材', '所有耗材库存充足', 'success');
+            } else {
+                showNotification('低库存耗材', `找到 ${filteredData.length} 种低库存耗材`, 'warning');
+            }
+        }
+        
+        // 处理申购提交
+        function handleOrderSubmit(e) {
+            const itemId = parseInt(e.target.getAttribute('data-id'));
+            const orderInput = document.querySelector(`.order-input[data-id="${itemId}"]`);
+            const orderQty = parseInt(orderInput.value);
+            
+            if (isNaN(orderQty) || orderQty <= 0) {
+                showNotification('申购失败', '请输入有效的申购数量', 'error');
+                return;
+            }
+            
+            // 找到对应项目
+            const itemIndex = inventoryData.findIndex(item => item.id === itemId);
+            if (itemIndex !== -1) {
+                const item = inventoryData[itemIndex];
+                
+                // 显示成功消息
+                showNotification('申购成功', `已提交申购: ${item.name} × ${orderQty}${item.unit}`, 'success');
+                
+                // 记录申购历史
+                const orderHistory = JSON.parse(localStorage.getItem('labOrderHistory') || '[]');
+                orderHistory.push({
+                    id: Date.now(),
+                    itemId: item.id,
+                    itemName: item.name,
+                    itemCode: item.code,
+                    quantity: orderQty,
+                    unit: item.unit,
+                    date: new Date().toISOString()
+                });
+                localStorage.setItem('labOrderHistory', JSON.stringify(orderHistory));
+                
+                // 重置申购量
+                orderInput.value = 0;
+                inventoryData[itemIndex].orderQty = 0;
+                
+                // 保存到本地存储
+                saveDataToLocalStorage();
+                
+                // 重新渲染表格
+                renderTable();
+                renderStats();
+            }
+        }
+        
+        // 处理申购输入变化
+        function handleOrderInputChange(e) {
+            const itemId = parseInt(e.target.getAttribute('data-id'));
+            const orderQty = parseInt(e.target.value);
+            
+            if (!isNaN(orderQty) && orderQty >= 0) {
+                const itemIndex = inventoryData.findIndex(item => item.id === itemId);
+                if (itemIndex !== -1) {
+                    inventoryData[itemIndex].orderQty = orderQty;
+                    saveDataToLocalStorage();
+                    
+                    // 更新按钮状态
+                    const submitBtn = document.querySelector(`.submit-order[data-id="${itemId}"]`);
+                    if (orderQty > 0) {
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                    } else {
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = '0.5';
+                    }
+                }
+            }
+        }
+        
+        // 打开新增耗材模态框
+        function openAddModal() {
+            editItemId = null;
+            document.getElementById('modalTitle').textContent = '新增耗材';
+            document.getElementById('itemForm').reset();
+            document.getElementById('itemUnit').value = '个';
+            document.getElementById('itemMinStock').value = 10;
+            document.getElementById('itemLocation').value = '试剂柜A';
+            document.getElementById('itemCategory').value = '通用耗材';
+            document.getElementById('itemModal').style.display = 'flex';
+        }
+        
+        // 处理编辑项目
+        function handleEditItem(e) {
+            const itemId = parseInt(e.target.getAttribute('data-id'));
+            editItemId = itemId;
+            
+            const item = inventoryData.find(item => item.id === itemId);
+            if (!item) return;
+            
+            document.getElementById('modalTitle').textContent = '编辑耗材';
+            document.getElementById('itemName').value = item.name;
+            document.getElementById('itemCode').value = item.code;
+            document.getElementById('itemSpec').value = item.spec || '';
+            document.getElementById('itemUnit').value = item.unit || '个';
+            document.getElementById('itemStock').value = item.stock;
+            document.getElementById('itemMinStock').value = item.minStock;
+            document.getElementById('itemLocation').value = item.location || '试剂柜A';
+            document.getElementById('itemSupplier').value = item.supplier || '';
+            document.getElementById('itemCategory').value = item.category || '通用耗材';
+            document.getElementById('itemNotes').value = item.notes || '';
+            
+            document.getElementById('itemModal').style.display = 'flex';
+        }
+        
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('itemModal').style.display = 'none';
+        }
+        
+        // 处理表单提交
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            // 收集表单数据
+            const newItem = {
+                id: editItemId || (inventoryData.length > 0 ? Math.max(...inventoryData.map(item => item.id)) + 1 : 1),
+                name: document.getElementById('itemName').value,
+                code: document.getElementById('itemCode').value,
+                spec: document.getElementById('itemSpec').value,
+                unit: document.getElementById('itemUnit').value,
+                stock: parseInt(document.getElementById('itemStock').value),
+                minStock: parseInt(document.getElementById('itemMinStock').value),
+                location: document.getElementById('itemLocation').value,
+                supplier: document.getElementById('itemSupplier').value,
+                category: document.getElementById('itemCategory').value,
+                notes: document.getElementById('itemNotes').value,
+                orderQty: 0
+            };
+            
+            // 验证数据
+            if (newItem.stock < 0) {
+                showNotification('保存失败', '库存量不能为负数', 'error');
+                return;
+            }
+            
+            if (newItem.minStock <= 0) {
+                showNotification('保存失败', '最低库存必须大于0', 'error');
+                return;
+            }
+            
+            // 检查货号是否已存在（编辑时排除自身）
+            const existingCode = inventoryData.find(item => 
+                item.code === newItem.code && (!editItemId || item.id !== editItemId)
+            );
+            
+            if (existingCode) {
+                showNotification('保存失败', '该货号已存在，请使用不同的货号', 'error');
+                return;
+            }
+            
+            if (editItemId) {
+                // 更新现有项目
+                const itemIndex = inventoryData.findIndex(item => item.id === editItemId);
+                if (itemIndex !== -1) {
+                    // 保留原有的申购量
+                    newItem.orderQty = inventoryData[itemIndex].orderQty;
+                    inventoryData[itemIndex] = newItem;
+                    showNotification('更新成功', `耗材 "${newItem.name}" 已更新`, 'success');
+                }
+            } else {
+                // 添加新项目
+                inventoryData.push(newItem);
+                showNotification('添加成功', `耗材 "${newItem.name}" 已添加`, 'success');
+            }
+            
+            // 保存数据
+            saveDataToLocalStorage();
+            
+            // 更新显示
+            filteredData = [...inventoryData];
+            renderTable();
+            renderStats();
+            closeModal();
+        }
+        
+        // 保存数据到本地存储
+        function saveDataToLocalStorage() {
+            // 只保存库存和申购量等变化的数据
+            const dataToSave = inventoryData.map(item => ({
+                id: item.id,
+                stock: item.stock,
+                orderQty: item.orderQty
+            }));
+            localStorage.setItem('labInventoryData', JSON.stringify(dataToSave));
+            
+            // 更新最后更新时间
+            updateLastUpdateTime();
+        }
+        
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('tableContent').style.display = 'none';
+        }
+        
+        // 隐藏加载状态
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        // 显示通知
+        function showNotification(title, message, type) {
+            const notification = document.getElementById('notification');
+            const notificationTitle = document.getElementById('notificationTitle');
+            const notificationMessage = document.getElementById('notificationMessage');
+            
+            notificationTitle.textContent = title;
+            notificationMessage.textContent = message;
+            
+            // 设置类型
+            notification.className = 'notification';
+            notification.classList.add(type);
+            
+            // 显示通知
+            notification.classList.add('show');
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 打开侧边栏菜单
+        function openSidebar() {
+            document.getElementById('sidebar').classList.add('active');
+            document.getElementById('sidebarOverlay').classList.add('active');
+        }
+        
+        // 关闭侧边栏菜单
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('sidebarOverlay').classList.remove('active');
+        }
+        
+        // 更新最后更新时间
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('lastUpdateTime').textContent = timeString;
+        }
+    </script>
+</body>
+</html>
